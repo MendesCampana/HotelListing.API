@@ -18,7 +18,7 @@ namespace HotelListing.API.Controllers
     public class CountriesController : ControllerBase
     {
         private readonly IMapper _mapper;
-        private ICountryRepository _countryRepository;
+        private readonly ICountryRepository _countryRepository;
         public CountriesController(IMapper mapper, ICountryRepository countryRepository)
         {
             _mapper = mapper;
@@ -55,15 +55,12 @@ namespace HotelListing.API.Controllers
         public async Task<IActionResult> PutCountry(int id, UpdateCountryDto updateCountry)
         {
             if (id != updateCountry.Id)
-            {
                 return BadRequest();
-            }
 
             var country = await _countryRepository.GetAsync(id);
             if (country == null)
-            {
                 return NotFound();
-            }
+
             //here we have EF modifying the entity and state for it is 'Modified'
             _mapper.Map(updateCountry, country);
 
