@@ -10,9 +10,13 @@ namespace HotelListing.API.Controllers
     public class AccountController : ControllerBase
     {
         private IAuthManager _authManager;
-        public AccountController(IAuthManager authManager)
+        private readonly ILogger<AccountController> _logger;
+
+        public AccountController(IAuthManager authManager,
+            ILogger<AccountController> logger)
         {
-            _authManager = authManager;                
+            _authManager = authManager;
+            _logger = logger;
         }
         //POST : api/account/register
         [HttpPost]
@@ -22,16 +26,26 @@ namespace HotelListing.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> Register([FromBody] ApiUserDto apiUserDto)
         {
-            var errorrs = await _authManager.Register(apiUserDto);
-            if (errorrs.Any())
+            _logger.LogInformation($"Regiser call for: {apiUserDto.Email}");
+            try
             {
-                foreach(var error in errorrs)
+                var errorrs = await _authManager.Register(apiUserDto);
+                if (errorrs.Any())
                 {
-                    ModelState.AddModelError(error.Code, error.Description);
+                    foreach (var error in errorrs)
+                    {
+                        ModelState.AddModelError(error.Code, error.Description);
+                    }
+                    return BadRequest(ModelState);
                 }
-                return BadRequest(ModelState);
+
+                return Ok();
             }
-            return Ok();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Something went wrong in the {nameof(Register)}");
+                return Problem($"Something went wrong in the {nameof(Register)}", statusCode: 500);
+            }
         }
         //POST : api/account/login
         [HttpPost]
@@ -41,7 +55,7 @@ namespace HotelListing.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> Login([FromBody] LoginDto loginDto)
         {
-           var authResponse = await _authManager.Login(loginDto);
+            var authResponse = await _authManager.Login(loginDto);
             if (authResponse == null)
             {
                 return Unauthorized();
