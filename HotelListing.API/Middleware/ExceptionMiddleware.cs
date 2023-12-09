@@ -7,9 +7,12 @@ namespace HotelListing.API.Middleware
     public class ExceptionMiddleware
     {
         private readonly RequestDelegate _next;
-        public ExceptionMiddleware(RequestDelegate next)
+        private readonly ILogger<ExceptionMiddleware> _logger;
+
+        public ExceptionMiddleware(RequestDelegate next, ILogger<ExceptionMiddleware> logger)
         {
             this._next = next;
+            this._logger = logger;
         }
         public async Task InvokeAsync(HttpContext context) 
         {
@@ -19,7 +22,7 @@ namespace HotelListing.API.Middleware
             }
             catch (Exception ex) 
             {
-
+                _logger.LogError($"Error occured during {context.Request.Path}. Reason {ex.Message}");
                 await HandleException(context, ex);
             }
         }
