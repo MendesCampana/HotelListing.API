@@ -6,8 +6,7 @@ using HotelListing.API.Contracts;
 using HotelListing.API.Data;
 using HotelListing.API.Models.Users;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.EntityFrameworkCore.Migrations.Operations;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 namespace HotelListing.API.Repository

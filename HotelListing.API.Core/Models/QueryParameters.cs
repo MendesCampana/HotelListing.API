@@ -1,6 +1,4 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
-
-namespace HotelListing.API.Models
+﻿namespace HotelListing.API.Models
 {
     public class QueryParameters
     {
