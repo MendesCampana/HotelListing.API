@@ -41,15 +41,8 @@ namespace HotelListing.API.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<HotelDto>> GetHotel(int id)
         {
-            var hotel = await _hotelsRepository.GetAsync(id);
-
-            if (hotel == null)
-            {
-                return NotFound();
-            }
-            var hotelDto = _mapper.Map<HotelDto>(hotel);
-
-            return hotelDto;
+            var hotel = await _hotelsRepository.GetAsync<HotelDto>(id);
+            return Ok(hotel);
         }
 
         // PUT: api/Hotels/5
@@ -61,13 +54,10 @@ namespace HotelListing.API.Controllers
                 return BadRequest();
 
             var hotel =  await _hotelsRepository.GetAsync(id);
-            if (hotel == null)
-                return NotFound();
-            //here we have EF modifying the entity and state for it is 'Modified'
-            _mapper.Map(updateHotel, hotel);
+    
             try
             {
-                await _hotelsRepository.UpdateASync(hotel);
+                await _hotelsRepository.UpdateAsync(hotel);
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -89,25 +79,15 @@ namespace HotelListing.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Hotel>> PostHotel(CreateHotelDto createHotel)
         {
-            var hotel = _mapper.Map<Hotel>(createHotel);
-
-            await _hotelsRepository.AddAsync(hotel);
-
+            var hotel = await _hotelsRepository.AddAsync<CreateHotelDto, HotelDto>(createHotel);
             return CreatedAtAction("GetHotel", new { id = hotel.Id }, hotel);
         }
 
         // DELETE: api/Hotels/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteHotel(int id)
-        {
-            var hotel = await _hotelsRepository.GetAsync(id);
-            if (hotel == null)
-            {
-                return NotFound();
-            }
-
-            await _hotelsRepository.DeleteAsync(id);
-   
+        {          
+            await _hotelsRepository.DeleteAsync(id);   
             return NoContent();
         }
 

@@ -4,6 +4,8 @@ using HotelListing.API.Contracts;
 using HotelListing.API.Data;
 using HotelListing.API.Models;
 using Microsoft.EntityFrameworkCore;
+using HotelListing.API.Exceptions;
+using System.Diagnostics.Metrics;
 
 namespace HotelListing.API.Repository
 {
@@ -24,17 +26,31 @@ namespace HotelListing.API.Repository
             return entity;
         }
 
+        public async Task<TResult> AddAsync<TSource, TResult>(TSource source)
+        {
+            var entity = _mapper.Map<T>(source);
+
+            await _context.AddAsync(entity);
+            await _context.SaveChangesAsync();
+
+            return _mapper.Map<TResult>(entity);
+        }
+
         public async Task DeleteAsync(int id)
         {
             var entity = await GetAsync(id);
-            _context.Set<T>().Remove(entity); 
+            if (entity is null)
+            {
+                throw new NotFoundException(typeof(T).Name, id);
+            }
+            _context.Set<T>().Remove(entity);
             await _context.SaveChangesAsync();
         }
 
         public async Task<bool> Exists(int id)
         {
             var entity = await GetAsync(id);
-            return entity != null; 
+            return entity != null;
         }
 
         public async Task<List<T>> GetAllAsync()
@@ -59,16 +75,47 @@ namespace HotelListing.API.Repository
             };
         }
 
-        public async Task<T> GetAsync(int? id)
+        public async Task<List<TResult>> GetAllAsync<TResult>()
         {
-            if (id is null) return null;
-
-            return await _context.Set<T>().FindAsync(id);   
+           return await _context.Set<T>()
+                .ProjectTo<TResult>( _mapper.ConfigurationProvider)
+                .ToListAsync();
         }
 
-        public async Task UpdateASync(T entity)
+        public async Task<T> GetAsync(int? id)
+        {
+            var entity = await _context.Set<T>().FindAsync(id);
+
+            return entity ==  null ? throw new NotFoundException(typeof(T).Name, id.HasValue ? id : "No key was found") : entity;
+        }
+
+        public async Task<TResult> GetAsync<TResult>(int? id)
+        {
+            var result = await _context.Set<T>().FindAsync(id);
+            if (result is null)
+            {
+               throw new NotFoundException(typeof(T).Name, id.HasValue ? id : "No key was found");
+            }           
+            return _mapper.Map<TResult>(result);
+        }
+
+        public async Task UpdateAsync(T entity)
         {
             _context.Update(entity); ;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateAsync<TSource>(int id, TSource source)
+        {
+            var entity = await GetAsync(id);
+
+            if(entity == null)
+            {
+                throw new NotFoundException(typeof(T).Name, id);
+            }
+
+            _mapper.Map(entity, source);
+            _context.Update(entity);
             await _context.SaveChangesAsync();
         }
     }
